@@ -49,7 +49,29 @@ public class SecondaryErrorTest {
 
 
   public static void main(String[] args) throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+
+    boolean with_callstacks = false;
+    if (args.length != 1) {
+      throw new IllegalArgumentException("Missing argument");
+    } else if (args[0].equals("with_callstacks")) {
+      with_callstacks = true;
+    } else if (args[0].equals("no_callstacks")) {
+      with_callstacks = false;
+    } else {
+      throw new IllegalArgumentException("unknown argument (" + args[0] + ")");
+    }
+
+    // How this works:
+    // The test will fault with SIGFPE (ErrorHandlerTest=15) and then, during error handling,
+    // fault twice with SIGSEGV (TestCrashInErrorHandler=14). The point is not only to test
+    // secondary crashes, but secondary crashes with a *different* error signal. This should
+    // be handled correctly and not hang/end the process (so the signal mask must be set correctly).
+    // See JDK-8065895.
+    // We do this twice, to check that secondary signal handling works repeatedly.
+    // We also check, optionally, that +ErrorLogSecondaryErrorDetails produces callstacks for
+    // the secondary error.
+
+    ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(
         "-XX:+UnlockDiagnosticVMOptions",
         "-Xmx100M",
         "-XX:-CreateCoredumpOnCrash",

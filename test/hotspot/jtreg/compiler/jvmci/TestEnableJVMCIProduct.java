@@ -73,18 +73,30 @@ public class TestEnableJVMCIProduct {
     }
 
     static void test(String explicitFlag, Expectation... expectations) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-            "-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCIProduct", "-XX:-UnlockExperimentalVMOptions",
-            explicitFlag,
-            "-XX:+PrintFlagsFinal", "-version");
-        OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        for (Expectation expectation : expectations) {
-            output.stdoutShouldMatch(expectation.pattern);
-        }
-        if (output.getExitValue() != 0) {
-            // This should only happen when JVMCI compilation is requested and the VM has no
-            // JVMCI compiler (e.g. Graal is not included in the build)
-            output.stdoutShouldMatch("No JVMCI compiler found");
+        String[] flags = {"-XX:+EnableJVMCIProduct", "-XX:+UseGraalJIT"};
+        String cwd = System.getProperty("user.dir");
+        for (String flag : flags) {
+            ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(
+                "-XX:+UnlockExperimentalVMOptions", flag, "-XX:-UnlockExperimentalVMOptions",
+                explicitFlag,
+                "-XX:+PrintFlagsFinal",
+                "--class-path=" + System.getProperty("java.class.path"),
+                "TestEnableJVMCIProduct", "jvmci.Compiler");
+            OutputAnalyzer output = new OutputAnalyzer(pb.start());
+            for (Expectation expectation : expectations) {
+                output.stdoutShouldMatch(expectation.pattern);
+            }
+            if (output.getExitValue() != 0) {
+                // This should only happen when JVMCI compilation is requested and the VM has no
+                // JVMCI compiler (e.g. Graal is not included in the build)
+                if (flag.equals("-XX:+UseGraalJIT")) {
+                    output.shouldContain("JVMCI compiler 'graal' specified by jvmci.Compiler not found");
+                } else {
+                    output.stdoutShouldMatch("No JVMCI compiler found");
+                }
+            } else if (flag.equals("-XX:+UseGraalJIT")) {
+                output.shouldContain("jvmci.Compiler=graal");
+            }
         }
     }
 }

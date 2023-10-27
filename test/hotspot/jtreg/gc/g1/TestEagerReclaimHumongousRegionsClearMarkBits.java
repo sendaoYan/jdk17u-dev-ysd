@@ -118,7 +118,7 @@ class TestEagerReclaimHumongousRegionsClearMarkBitsReclaimRegionFast {
 
 public class TestEagerReclaimHumongousRegionsClearMarkBits {
     public static void main(String[] args) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+        ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(
             "-XX:+UseG1GC",
             "-Xms128M",
             "-Xmx128M",

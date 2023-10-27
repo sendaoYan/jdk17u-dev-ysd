@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,10 @@ public class MacJNUEncoding {
 
         final String locale = args[2];
         System.out.println("Running test for locale: " + locale);
-        ProcessBuilder pb = ProcessTools.createTestJvm(
-                ExpectedEncoding.class.getName(), args[0], args[1]);
+        var cmds = (args.length == 4)
+                ? List.of("-Dfile.encoding=" + args[3], ExpectedEncoding.class.getName(), args[0], args[1])
+                : List.of(ExpectedEncoding.class.getName(), args[0], args[1]);
+        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder(cmds);
         Map<String, String> env = pb.environment();
         env.put("LANG", locale);
         env.put("LC_ALL", locale);

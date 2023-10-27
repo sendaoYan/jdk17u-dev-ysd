@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,11 +76,12 @@ public class ClassLoadUnloadTest {
     static ProcessBuilder exec(String... args) throws Exception {
         List<String> argsList = new ArrayList<>();
         Collections.addAll(argsList, args);
-        Collections.addAll(argsList, "-Xmn8m");
-        Collections.addAll(argsList, "-Dtest.class.path=" + System.getProperty("test.class.path", "."));
-        Collections.addAll(argsList, "-XX:+ClassUnloading");
-        Collections.addAll(argsList, ClassUnloadTestMain.class.getName());
-        return ProcessTools.createJavaProcessBuilder(argsList);
+        Collections.addAll(argsList, "-Xmn8m", "-Xbootclasspath/a:.", "-XX:+UnlockDiagnosticVMOptions",
+                           "-XX:+WhiteBoxAPI", "-XX:+ClassUnloading", ClassUnloadTestMain.class.getName());
+        ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(argsList);
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.shouldHaveExitValue(0);
+        return output;
     }
 
     public static void main(String... args) throws Exception {

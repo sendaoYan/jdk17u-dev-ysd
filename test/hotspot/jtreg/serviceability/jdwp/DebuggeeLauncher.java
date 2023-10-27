@@ -76,7 +76,7 @@ public class DebuggeeLauncher implements StreamHandler.Listener {
      */
     public void launchDebuggee() throws Throwable {
 
-        ProcessBuilder pb = new ProcessBuilder(getCommand());
+        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder(JDWP_OPT, DEBUGGEE);
         p = pb.start();
         inputHandler = new StreamHandler(p.getInputStream(), this);
         errorHandler = new StreamHandler(p.getErrorStream(), this);

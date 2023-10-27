@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,23 +34,11 @@ class ClassLoadingThread extends Thread {
     private boolean success = true;
     public boolean report_success() { return success; }
 
-    public void run() {
-        try {
-            ThreadPrint.println("Starting...");
-            // Initiate class loading using specified type
-            Class<?> a = Class.forName("ClassInLoader", true, ldr);
-            Object obj = a.getConstructor().newInstance();
-
-        } catch (Throwable e) {
-            ThreadPrint.println("Exception is caught: " + e);
-            e.printStackTrace();
-            success = false;
-        } finally {
-            ThreadPrint.println("Finished");
-            // Wake up the second thread
-            synchronized (thread_sync) {
-                thread_sync.notify();
-            }
+        for (var data : testData) {
+            ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(data.arg);
+            OutputAnalyzer output = new OutputAnalyzer(pb.start());
+            output.shouldContain(data.expected);
+            output.shouldHaveExitValue(1);
         }
     }
 }

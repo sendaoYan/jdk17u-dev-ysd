@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,17 +39,18 @@ public class HandshakeTransitionTest {
     public static native void someTime(int ms);
 
     public static void main(String[] args) throws Exception {
-        ProcessBuilder pb =
-            ProcessTools.createTestJvm(
-                    "-Djava.library.path=" + Utils.TEST_NATIVE_PATH,
-                    "-XX:+SafepointALot",
-                    "-XX:+HandshakeALot",
-                    "-XX:GuaranteedSafepointInterval=20",
-                    "-Xlog:ergo*",
-                    "-XX:ParallelGCThreads=1",
-                    "-XX:ConcGCThreads=1",
-                    "-XX:CICompilerCount=2",
-                    "HandshakeTransitionTest$Test");
+        List<String> commands = new ArrayList<>();
+        commands.add("-Djava.library.path=" + Utils.TEST_NATIVE_PATH);
+        commands.add("-XX:+UnlockDiagnosticVMOptions");
+        commands.add("-XX:+SafepointALot");
+        commands.add("-XX:+HandshakeALot");
+        commands.add("-XX:GuaranteedSafepointInterval=20");
+        commands.add("-XX:ParallelGCThreads=1");
+        commands.add("-XX:ConcGCThreads=1");
+        commands.add("-XX:CICompilerCount=2");
+        commands.addAll(Arrays.asList(args));
+        commands.add("HandshakeTransitionTest$Test");
+        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder(commands);
 
         OutputAnalyzer output = ProcessTools.executeProcess(pb);
         output.reportDiagnosticSummary();

@@ -128,4 +128,41 @@ public class CommandLineFlagCombo {
         }
         return false;
     }
+
+    // { -Xshare:dump, -XX:ArchiveClassesAtExit} x { -XX:DumpLoadedClassList }
+    private static void testExtraCase(String jarFile, String[] classList) throws Exception {
+        // 1. -Xshare:dump -XX:-XX:DumpLoadedClassFile
+        String dumpedListName = "tmpClassList.list";
+        File listFile = new File(dumpedListName);
+        if (listFile.exists()) {
+            listFile.delete();
+        }
+        OutputAnalyzer dumpOutput = TestCommon.dump(jarFile, classList, "-XX:DumpLoadedClassList=" + dumpedListName);
+        TestCommon.checkDump(dumpOutput, "Loading classes to share");
+        if (!listFile.exists()) {
+            throw new RuntimeException("ClassList file " + dumpedListName + " should be created");
+        }
+
+        // 2. -XX:ArchiveClassesAtExit -XX:DumpLoadedClassFile
+        String dynName = "tmpDyn.jsa";
+        File dynFile = new File(dynName);
+        if (dynFile.exists()) {
+            dynFile.delete();
+        }
+        if (listFile.exists()) {
+            listFile.delete();
+        }
+        String[] args = new String[] {
+            "-cp", jarFile, "-XX:ArchiveClassesAtExit=" + dynName, "-XX:DumpLoadedClassList=" + dumpedListName, "Hello"};
+        ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(args);
+        OutputAnalyzer output = TestCommon.executeAndLog(pb, "combo");
+        output.shouldHaveExitValue(0)
+              .shouldContain(HELLO_WORLD);
+        if (!dynFile.exists()) {
+            throw new RuntimeException("Dynamic archive file " + dynName + " should be created");
+        }
+        if (!listFile.exists()) {
+            throw new RuntimeException("ClassList file " + dumpedListName + " should be created");
+        }
+    }
 }

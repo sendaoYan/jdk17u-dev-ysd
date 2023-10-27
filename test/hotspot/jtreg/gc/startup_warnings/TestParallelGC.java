@@ -34,18 +34,8 @@ package gc.startup_warnings;
  * @run driver gc.startup_warnings.TestParallelGC
  */
 
-import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.process.OutputAnalyzer;
-
-
-public class TestParallelGC {
-
-  public static void main(String args[]) throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+UseParallelGC", "-version");
-    OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldNotContain("deprecated");
-    output.shouldNotContain("error");
-    output.shouldHaveExitValue(0);
-  }
-
+        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder("-javaagent:agent.jar",  "-version");
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.stdoutShouldContain("passed");
+    }
 }

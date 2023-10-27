@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,8 +39,8 @@ import jdk.test.whitebox.WhiteBox;
 
 public class TestAbortVMOnSafepointTimeout {
 
-    public static void main(String[] args) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+    public static void testThreadKilledOnSafepointTimeout() throws Exception {
+        ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder(
                 "-Xbootclasspath/a:.",
                 "-XX:+UnlockDiagnosticVMOptions",
                 "-XX:+WhiteBoxAPI",
@@ -56,11 +56,33 @@ public class TestAbortVMOnSafepointTimeout {
         );
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        verifyAbortVmApplied(output);
+    }
+
+                "-Xbootclasspath/a:.",
+                "-XX:+UnlockDiagnosticVMOptions",
+                "-XX:+WhiteBoxAPI",
+                "-XX:+SafepointTimeout",
+                "-XX:+SafepointALot",
+                "-XX:+AbortVMOnSafepointTimeout",
+                "-XX:AbortVMOnSafepointTimeoutDelay=10000", // Using 10 seconds instead of a smaller value for windows-debug
+                "-XX:SafepointTimeoutDelay=50",
+                "-XX:GuaranteedSafepointInterval=1",
+                "-XX:-CreateCoredumpOnCrash",
+                "-Xms64m",
+                "TestAbortVMOnSafepointTimeout$TestWithDelay"
+        );
+
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.shouldContain(TestWithDelay.PRE_STALL_TEXT);
+        verifyAbortVmApplied(output);
+    }
+
+    private static void verifyAbortVmApplied(OutputAnalyzer output) {
         output.shouldContain("Timed out while spinning to reach a safepoint.");
         if (Platform.isWindows()) {
             output.shouldContain("Safepoint sync time longer than");
         } else {
-            output.shouldContain("SIGILL");
             if (Platform.isLinux()) {
                 output.shouldContain("(sent by kill)");
             }

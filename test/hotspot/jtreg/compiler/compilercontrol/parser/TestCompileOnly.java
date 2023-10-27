@@ -37,16 +37,16 @@ import jdk.test.lib.process.ProcessTools;
 public class TestCompileOnly {
 
     public static void main(String[] args) throws Exception {
-        test(",");
-        test(" ");
-        test(", ");
-        test(" ,");
-        test(",,");
-        test("  ");
-    }
-
-    public static void test(String compileOnlyCommand) throws Exception {
-        OutputAnalyzer output = ProcessTools.executeTestJvm("-XX:CompileOnly=" + compileOnlyCommand, "-version");
-        output.shouldHaveExitValue(0);
+        ProcessBuilder pb = ProcessTools.createLimitedTestJavaProcessBuilder("-Xlog:vmmutex",
+                                                                             "-version");
+        OutputAnalyzer oa = new OutputAnalyzer(pb.start());
+        oa.shouldContain("VM Mutex/Monitor ranks:");
+        if (Platform.isDebugBuild()) {
+            oa.shouldContain("Rank \"safepoint\"");
+            oa.shouldContain("Heap_lock");
+        } else {
+            oa.shouldContain("Only known in debug builds");
+        }
+        oa.shouldHaveExitValue(0);
     }
 }

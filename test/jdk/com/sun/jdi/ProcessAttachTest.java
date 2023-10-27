@@ -71,7 +71,7 @@ public class ProcessAttachTest {
     }
 
     private static void runTest(String jdwpArg) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+        ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder(
                 jdwpArg,
                 "-classpath", TESTCLASSES,
                 "ProcessAttachTestTarg");

@@ -109,16 +109,18 @@ public class TestDumpOnCrash {
 
     private static long runProcess(Class<?> crasher, String signal, boolean disk) throws Exception {
         System.out.println("Test case for crasher " + crasher.getName());
-        final String flightRecordingOptions = "dumponexit=true,disk=" + Boolean.toString(disk);
-        Process p = ProcessTools.createTestJvm(
-                "-Xmx64m",
-                "-XX:-CreateCoredumpOnCrash",
-                "-XX:-TieredCompilation", // Avoid secondary crashes (see JDK-8293166)
-                "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
-                "-XX:StartFlightRecording:" + flightRecordingOptions,
-                crasher.getName(),
-                signal)
-            .start();
+        List<String> options = new ArrayList<>();
+        options.add("-Xmx64m");
+        options.add("-XX:-CreateCoredumpOnCrash");
+        options.add("-XX:-TieredCompilation"); // Avoid secondary crashes (see JDK-8293166)
+        options.add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED");
+        options.add("-XX:StartFlightRecording:dumponexit=true,disk=" + Boolean.toString(disk));
+        if (dumppath != null) {
+            options.add("-XX:FlightRecorderOptions=dumppath=" + dumppath);
+        }
+        options.add(crasher.getName());
+        options.add(signal);
+        Process p = ProcessTools.createTestJavaProcessBuilder(options).start();
 
         OutputAnalyzer output = new OutputAnalyzer(p);
         System.out.println("========== Crasher process output:");

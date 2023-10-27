@@ -29,21 +29,28 @@
  * @run driver compiler.c2.Test8062950
  */
 
-package compiler.c2;
+import jdk.test.lib.process.OutputAnalyzer;
+import static jdk.test.lib.process.ProcessTools.createTestJavaProcessBuilder;
+import static jdk.test.lib.process.ProcessTools.executeProcess;
 
 import jdk.test.lib.process.ProcessTools;
 
 public class Test8062950 {
     private static final String CLASSNAME = "DoesNotExist";
     public static void main(String[] args) throws Exception {
-        ProcessTools.executeTestJvm("-Xcomp",
-                                    "-XX:-TieredCompilation",
-                                    "-XX:-UseOptoBiasInlining",
-                                    CLASSNAME)
-                    .shouldHaveExitValue(1)
-                    .shouldContain("Error: Could not find or load main class " + CLASSNAME)
-                    .shouldNotContain("A fatal error has been detected")
-                    .shouldNotContain("Internal Error")
-                    .shouldNotContain("HotSpot Virtual Machine Error");
+        if (args.length > 0) {
+            ProcessBuilder pb = createTestJavaProcessBuilder("ShutdownHook");
+            OutputAnalyzer output = executeProcess(pb);
+            output.shouldContain("Shutdown Hook");
+            output.shouldHaveExitValue(0);
+            return;
+        }
+
+        Thread thread = Thread.ofVirtual().unstarted(()-> {
+            System.out.println("Shutdown Hook");
+            System.out.flush();
+        });
+        Runtime.getRuntime().addShutdownHook(thread);
+        System.exit(0);
     }
 }
